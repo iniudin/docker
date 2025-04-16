@@ -9,7 +9,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-  rebbitmq:
+  rabbitmq:
     image: rabbitmq:management-alpine
     ports:
       - "15672:15672"
