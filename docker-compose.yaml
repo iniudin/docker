@@ -1,22 +1,36 @@
+x-common: &common
+  restart: always
+  deploy:
+    resources:
+      limits:
+        cpus: '0.5'
+        memory: 512M
+
 services:
   postgres:
+    <<: *common
     image: postgres:alpine
     container_name: postgres-dev
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./initializa.sql:/docker-entrypoint-initdb.d/initializa.sql
 
   rabbitmq:
+    <<: *common
     image: rabbitmq:management-alpine
     container_name: rabbitmq-dev
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_DEFAULT_USER: rabbitmq
+      RABBITMQ_DEFAULT_PASS: rabbitmq
+      RABBITMQ_DEFAULT_VHOST: /
+      RABBITMQ_NODE_PORT: 5672
+      RABBITMQ_MANAGEMENT_PORT: 15672
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -24,6 +38,7 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
 
   redis:
+    <<: *common
     image: redis:latest
     container_name: redis-dev
     ports:
@@ -31,7 +46,22 @@ services:
     volumes:
       - redis_data:/data
 
+  elasticsearch:
+    <<: *common
+    image: elasticsearch:8.18.1
+    container_name: elasticsearch-dev
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+
 volumes:
   postgres_data:
   rabbitmq_data:
   redis_data:
+  elasticsearch_data:
